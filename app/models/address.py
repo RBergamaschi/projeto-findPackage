@@ -22,5 +22,5 @@ class Address(Base):
     complement: Mapped[str | None] = mapped_column(String(255))
     
     # Relationships
-    users: Mapped[list[User]] = relationship("User", back_populates="address")
+    user: Mapped[User | None] = relationship("User", back_populates="address")
     orders: Mapped[list[Order]] = relationship("Order", back_populates="address")

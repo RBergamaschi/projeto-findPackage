@@ -23,5 +23,10 @@ class User(Base):
     address_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("addresses.id"))
     
     # Relationships
-    address: Mapped[Address | None] = relationship("Address", back_populates="users")
+    address: Mapped[Address | None] = relationship(
+        "Address", 
+        back_populates="user", 
+        cascade="all, delete-orphan",
+        single_parent=True
+    )
     orders: Mapped[list[Order]] = relationship("Order", back_populates="user")

@@ -21,7 +21,6 @@ class UserUpdate(BaseModel):
     social_name: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    address: Optional[AddressUpdate] = None
 
 class UserRead(BaseModel):
     id: int
