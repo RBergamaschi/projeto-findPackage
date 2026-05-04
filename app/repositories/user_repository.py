@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from app.models.user import User
@@ -13,6 +13,7 @@ class UserRepository:
         result = await self.db.execute(
             select(User)
             .where(User.id == user_id)
+            .options(selectinload(User.address))
         )
         return result.scalar_one_or_none()
     
@@ -20,15 +21,25 @@ class UserRepository:
         result = await self.db.execute(
             select(User)
             .where(User.email == email)
+            .options(selectinload(User.address))
         )
         return result.scalar_one_or_none()
     
-    async def get_all(self) -> list[User]:
+    async def get_all(self, limit: int, offset: int) -> tuple[list[User], int]:
         result = await self.db.execute(
             select(User)
-            .options(selectinload(User.orders))
+            .options(selectinload(User.address))
+            .limit(limit)
+            .offset(offset)
         )
-        return result.scalars().all()
+        users = result.scalars().all()
+        
+        count_result = await self.db.execute(
+            select(func.count()).select_from(User)
+        )
+        total = count_result.scalar()
+        
+        return users, total
     
     async def create(self, user: User) -> User:
         self.db.add(user)

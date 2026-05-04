@@ -4,6 +4,7 @@ from app.models.address import Address
 from app.repositories.address_repository import AddressRepository
 from app.schemas.address_schema import AddressUpdate, AddressRead
 from app.core.exceptions import NotFoundException
+from app.schemas.pagination_schema import PaginationParams, PaginatedResponse
 
 
 class AddressService:
@@ -17,14 +18,34 @@ class AddressService:
             raise NotFoundException("Address not found")
         return AddressRead.model_validate(address)
     
-    async def get_addresses_by_cep(self, cep: str) -> list[AddressRead]:
-        addresses = await self.address_repository.get_by_cep(cep)
-        return [AddressRead.model_validate(address) for address in addresses]
-    
-    async def get_all_addresses(self) -> list[AddressRead]:
-        addresses = await self.address_repository.get_all()
-        return [AddressRead.model_validate(address) for address in addresses]
-    
+    async def get_addresses_by_cep(self, cep: str, params: PaginationParams) -> PaginatedResponse[AddressRead]:
+        offset = (params.page - 1) * params.size
+        addresses, total = await self.address_repository.get_by_cep(cep, limit=params.size, offset=offset)
+        if not total:
+            raise NotFoundException("No addresses found for the given CEP")
+        pages = -(-total // params.size)
+
+        return PaginatedResponse(
+            items=[AddressRead.model_validate(address) for address in addresses],
+            total=total,
+            page=params.page,
+            size=params.size,
+            pages=pages
+        )
+
+    async def get_all_addresses(self, params: PaginationParams) -> PaginatedResponse[AddressRead]:
+        offset = (params.page - 1) * params.size
+        addresses, total = await self.address_repository.get_all(limit=params.size, offset=offset)
+        pages = -(-total // params.size)
+
+        return PaginatedResponse(
+            items=[AddressRead.model_validate(address) for address in addresses],
+            total=total,
+            page=params.page,
+            size=params.size,
+            pages=pages
+        )
+
     async def update_address(self, address_id: int, address_update: AddressUpdate) -> AddressRead:
         address = await self.address_repository.get_by_id(address_id)
         if not address:

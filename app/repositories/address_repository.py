@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from app.models.address import Address
@@ -16,18 +16,36 @@ class AddressRepository:
         )
         return result.scalar_one_or_none()
     
-    async def get_by_cep(self, cep: str) -> list[Address]:
+    async def get_by_cep(self, cep: str, limit: int, offset: int) -> tuple[list[Address], int]:
         result = await self.db.execute(
             select(Address)
             .where(Address.cep == cep)
+            .limit(limit)
+            .offset(offset)
         )
-        return result.scalars().all()
+        addresses = result.scalars().all()
+        
+        count_result = await self.db.execute(
+            select(func.count()).select_from(Address).where(Address.cep == cep)
+        )
+        total = count_result.scalar()
+        
+        return addresses, total
     
-    async def get_all(self)-> list[Address]:
+    async def get_all(self, limit: int, offset: int) -> tuple[list[Address], int]:
         result = await self.db.execute(
             select(Address)
+            .limit(limit)
+            .offset(offset)
         )
-        return result.scalars().all()
+        addresses = result.scalars().all()
+        
+        count_result = await self.db.execute(
+            select(func.count()).select_from(Address)
+        )
+        total = count_result.scalar()
+        
+        return addresses, total
     
     async def create(self, address: Address) -> Address:
         self.db.add(address)

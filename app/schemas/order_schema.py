@@ -5,6 +5,7 @@ from datetime import datetime
 
 from app.models.enums import OrderStatus
 from app.schemas.address_schema import AddressRead
+from app.schemas.user_schema import UserSummary
 
 
 class OrderCreate(BaseModel):
@@ -18,6 +19,7 @@ class OrderUpdate(BaseModel):
 class OrderRead(BaseModel):
     id: int
     address: AddressRead
+    user: UserSummary
     status: OrderStatus
     created_at: datetime
 

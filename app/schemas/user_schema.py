@@ -1,10 +1,8 @@
 from __future__ import annotations
 from typing import Optional
-from pydantic import BaseModel, EmailStr, ConfigDict, computed_field
-from datetime import datetime
+from pydantic import BaseModel, EmailStr, ConfigDict, computed_field, field_validator
 
-from app.schemas.address_schema import AddressCreate, AddressUpdate, AddressRead
-from app.schemas.order_schema import OrderRead
+from app.schemas.address_schema import AddressCreate, AddressRead
 
 
 class UserCreate(BaseModel):
@@ -14,7 +12,13 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     address: AddressCreate | None = None
-
+    
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: str) -> str:
+        if len(value) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        return value
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -29,7 +33,6 @@ class UserRead(BaseModel):
     social_name: Optional[str] = None
     email: EmailStr
     address: Optional[AddressRead] = None
-    orders: list[OrderRead] = []
     
     @computed_field
     @property

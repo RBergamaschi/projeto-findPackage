@@ -10,43 +10,97 @@ Aqui estão algumas razões pelas quais o PyJWT é uma escolha popular para aute
 4. Compatibilidade: O PyJWT é compatível com a maioria dos frameworks web Python, como Flask e Django, facilitando a integração em suas aplicações.
 5. Comunidade ativa: O PyJWT tem uma comunidade ativa de desenvolvedores, o que significa que você pode encontrar suporte e recursos facilmente.
 '''
-import jwt
-from datetime import datetime, timezone, timedelta
 
+
+import jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from datetime import datetime, timezone, timedelta
+from typing import Dict, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+from app.auth.security import verify_password
+from app.configs.database import get_db_connection
 from app.configs.environment import get_environment_settings
-from app.core.exceptions import UnauthorizedException
+from app.core.exceptions import UnauthorizedException, ForbiddenException
+from app.models.user import User
+from app.schemas.user_schema import UserRead
 
 
 env = get_environment_settings()
+security = HTTPBearer()
 
-SECRET_KEY = env.SECRET_KEY
-ALGORITHM = env.ALGORITHM
-ACCESS_TOKEN_EXPIRE_MINUTES = env.ACCESS_TOKEN_EXPIRE_MINUTES
-REFRESH_TOKEN_EXPIRE_DAYS = env.REFRESH_TOKEN_EXPIRE_DAYS
 
-def create_access_token(user_id: int) -> str:
-    payload = {
-        "sub": str(user_id),
-        "type": "access",
-        "iat": datetime.now(timezone.utc),
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+def create_access_token(data: Dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=env.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    to_encode.update({'exp': expire})
+    encoded_jwt = jwt.encode(to_encode, env.SECRET_KEY, algorithm=env.ALGORITHM)
+    return encoded_jwt
 
-def create_refresh_token(user_id: int) -> str:
-    payload = {
-        "sub": str(user_id),
-        "type": "refresh",
-        "iat": datetime.now(timezone.utc),
-        "exp": datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    }
-    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-
-def decode_token(token: str) -> dict:
+def verify_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            env.SECRET_KEY,
+            algorithms=[env.ALGORITHM]
+        )
         return payload
     except jwt.ExpiredSignatureError:
         raise UnauthorizedException("Token has expired")
     except jwt.InvalidTokenError:
         raise UnauthorizedException("Invalid token")
+
+
+async def authenticate_user(
+    email: str,
+    password: str,
+    db: AsyncSession
+) -> Optional[User]:
+    result = await db.execute(
+        select(User)
+        .where(User.email == email)
+    )
+    
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(password, user.hashed_password):
+        return None
+    
+    return user
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db_connection)
+) -> User:
+    payload = verify_token(credentials.credentials)
+    user_id_str = payload.get("sub")
+    
+    if not user_id_str:
+        raise UnauthorizedException("Invalid token")
+    
+    try:
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
+        raise UnauthorizedException("Invalid token")
+    
+    result = await db.execute(
+        select(User)
+        .where(User.id == user_id)
+        .options(selectinload(User.address))
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        raise UnauthorizedException("User not found")
+
+    return user
+
+def verify_address_ownership(
+    address_owner_id: int, 
+    user: User
+) -> None:
+    if address_owner_id != user.id:
+        raise ForbiddenException("You do not have permission to access this resource")

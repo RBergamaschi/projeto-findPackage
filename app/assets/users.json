@@ -1,0 +1,31 @@
+[
+    {
+        "first_name": "Rodrigo",
+        "last_name": "Bergamaschi",
+        "email": "rodrigo@email.com",
+        "password": "rodrigo21",
+        "address": {
+            "cep": "60834-255",
+            "state": "Ceará",
+            "city": "Fortaleza",
+            "neighborhood": "Edson Queiroz",
+            "street": "Rua Dom Delgado",
+            "number": 80,
+            "complement": "Casa 13"
+        }
+    },
+    {
+        "first_name": "Jenny",
+        "last_name": "Ribeiro",
+        "email": "jenny@email.com",
+        "password": "jenny21",
+        "address": {
+            "cep": "62850-000",
+            "state": "Ceará",
+            "city": "Cascavel",
+            "neighborhood": "Espaço Nobre",
+            "street": "Rua Jocelito Saboia de Castro",
+            "number": 2120
+        }
+    }
+]

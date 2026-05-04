@@ -4,6 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Integer, String, Boolean
 
 from app.models.base_model import EntityMeta as Base
+from app.models.enums import UserRole
 if TYPE_CHECKING:
     from app.models.address import Address
     from app.models.order import Order
@@ -19,7 +20,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    user_role: Mapped[UserRole] = mapped_column(String(20), nullable=False, default=UserRole.COSTUMER.value)
     address_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("addresses.id"))
     
     # Relationships
