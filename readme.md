@@ -20,6 +20,29 @@ API backend para um sistema de logística e rastreamento de entregas urbanas. Cl
 
 ---
 
+## .ENV
+```
+API_VERSION=1.0.0
+APP_NAME=Name_of_your_app
+
+FASTAPI_ENV=development
+DATABASE_DIALECT=postgresql+asyncpg
+DATABASE_HOST=Your_db_host
+DATABASE_PORT=Your_db_port
+DATABASE_USERNAME=Your_db_username
+DATABASE_PASSWORD=Your_db_password
+DATABASE_NAME=Your_db_name
+DEBUG_MODE=true
+SECRET_KEY=Your_secret_key
+ALGORITHM=Your_hash_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+```
+
+
+
+
+
 ## Arquitetura
 
 O projeto segue **Clean Architecture** com separação em camadas:
