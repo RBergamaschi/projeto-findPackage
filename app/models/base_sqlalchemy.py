@@ -7,7 +7,8 @@ async def init_db():
         user,
         address,
         order,
-        tracking
+        tracking,
+        driver_profile
     )
     
     async with Engine.begin() as conn:

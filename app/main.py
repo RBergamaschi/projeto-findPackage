@@ -7,19 +7,22 @@ from fastapi.middleware.cors import CORSMiddleware
 # Infrastructure
 from app.configs.database import AsyncSessionLocal
 from app.configs.environment import get_environment_settings
+
 #from app.configs.database import Engine, AssyncSessionLocal
 from app.models.base_sqlalchemy import init_db
 from app.core.exceptions import AppException
 
 # Seed
 from app.seed import run_seed
+
 # Routers
 from app.routers.v1 import (
     user_routers,
     address_routers,
     order_routers,
     tracking_routers,
-    auth_routers
+    auth_routers,
+    driver_profile_routers,
 )
 
 
@@ -54,6 +57,7 @@ app.include_router(address_routers.router)
 app.include_router(order_routers.router)
 app.include_router(tracking_routers.router)
 app.include_router(auth_routers.router)
+app.include_router(driver_profile_routers.router)
 
 @app.exception_handler(AppException)
 async def app_exception_handler(request: Request, exc: AppException):

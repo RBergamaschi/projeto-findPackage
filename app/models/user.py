@@ -2,12 +2,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Integer, String, Boolean
+from sqlalchemy import Enum as SqlEnum
 
 from app.models.base_model import EntityMeta as Base
 from app.models.enums import UserRole
 if TYPE_CHECKING:
     from app.models.address import Address
     from app.models.order import Order
+    from app.models.driver_profile import DriverProfile
 
 
 class User(Base):
@@ -20,9 +22,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    user_role: Mapped[UserRole] = mapped_column(String(20), nullable=False, default=UserRole.COSTUMER.value)
+    user_role: Mapped[UserRole] = mapped_column(SqlEnum(UserRole), nullable=False, default=UserRole.CUSTOMER)
     address_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("addresses.id"))
-    
+
     # Relationships
     address: Mapped[Address | None] = relationship(
         "Address", 
@@ -31,3 +33,9 @@ class User(Base):
         single_parent=True
     )
     orders: Mapped[list[Order]] = relationship("Order", back_populates="user")
+    driver_profile: Mapped[DriverProfile | None] = relationship(
+        "DriverProfile", 
+        back_populates="user", 
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
