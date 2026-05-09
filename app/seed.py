@@ -8,6 +8,7 @@ from app.configs.environment import get_environment_settings
 from app.auth.security import hash_password
 from app.models.user import User
 from app.models.address import Address
+from app.models.enums import UserRole
 
 
 env = get_environment_settings()
@@ -18,6 +19,33 @@ def load_json(path: Path):
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
+
+async def seed_admin(db: AsyncSession):
+    admin_email = env.ADMIN_EMAIL
+    admin_password = env.ADMIN_PASSWORD
+
+    # Verifica se o admin já existe
+    result = await db.execute(select(User).where(User.email == admin_email))
+    if result.scalar_one_or_none():
+        print("Admin user already exists. Skipping admin seeding.")
+        return
+
+    # Cria o usuário admin
+    admin_user = User(
+        first_name="Admin",
+        last_name="User",
+        email=admin_email,
+        hashed_password=hash_password(admin_password),
+        user_role= UserRole.ADMIN
+    )
+
+    try:
+        db.add(admin_user)
+        await db.commit()
+        print("Admin user created successfully.")
+    except IntegrityError:
+        await db.rollback()
+        print("Failed to create admin user due to integrity error.")
 
 async def seed_users_base(db: AsyncSession):
     users_data = load_json(DATA_DIR / "users.json")
@@ -61,6 +89,7 @@ async def seed_users_base(db: AsyncSession):
 
 async def run_seed(db: AsyncSession):
     tarefa = [
+        ("admin", seed_admin),
         ("users", seed_users_base),
     ]
     

@@ -7,7 +7,7 @@
 
 ## Modelos e domínio
 
-- [ ] 3. `DriverProfile` linkado ao `User` (CNH, tipo de veículo, placa)
+- [x] 3. `DriverProfile` linkado ao `User` (CNH, tipo de veículo, placa)
 - [ ] 4. `Order` enriquecido
   - [ ] `description`
   - [ ] `weight`
